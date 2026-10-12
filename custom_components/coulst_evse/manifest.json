@@ -3,9 +3,9 @@
   "name": "Coul Street EVSE",
   "codeowners": ["@coulst"],
   "config_flow": true,
-  "documentation": "https://github.com/coulst/esp32_connect",
+  "documentation": "https://github.com/coulst/home_assistant",
   "iot_class": "local_polling",
-  "issue_tracker": "https://github.com/coulst/esp32_connect/issues",
+  "issue_tracker": "https://github.com/coulst/home_assistant/issues",
   "requirements": ["pymodbus>=3.6.0"],
   "version": "0.1.0",
   "zeroconf": [
