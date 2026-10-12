@@ -1,0 +1,64 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect to Coul Street EVSE",
+        "data": {
+          "host": "Host",
+          "port": "Port",
+          "unit_id": "Modbus unit ID"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Could not connect. Check the host/port and that Modbus TCP is enabled under Settings on the charger (it ships disabled).",
+      "unsupported_map_version": "The charger reports a Modbus map version this integration doesn't understand - check for an integration update."
+    },
+    "abort": {
+      "already_configured": "This charger is already configured."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "charging_state": { "name": "Charging state" },
+      "pilot_state": { "name": "Pilot state" },
+      "cable_lock_state": { "name": "Cable lock state" },
+      "offered_current": { "name": "Offered current" },
+      "voltage": { "name": "Voltage" },
+      "current": { "name": "Current" },
+      "active_power": { "name": "Active power" },
+      "session_energy": { "name": "Session energy" },
+      "lifetime_energy": { "name": "Lifetime energy" },
+      "session_duration": { "name": "Session duration" },
+      "relay_temperature": { "name": "Relay temperature" },
+      "board_temperature": { "name": "Board temperature" },
+      "socket_temperature": { "name": "Socket temperature" },
+      "max_circuit_current": { "name": "Max circuit current" },
+      "max_user_set_current": { "name": "Max user set current" },
+      "max_cable_current": { "name": "Max cable current" },
+      "limiting_source": { "name": "Limiting source" },
+      "applied_limit": { "name": "Applied Modbus limit" },
+      "control_state": { "name": "Modbus control state" },
+      "since_modbus_write": { "name": "Seconds since Modbus write" }
+    },
+    "binary_sensor": {
+      "vehicle_connected": { "name": "Vehicle connected" },
+      "power_offered": { "name": "Power offered" },
+      "charging": { "name": "Charging" },
+      "active": { "name": "Active" },
+      "error": { "name": "Error" },
+      "comm_error": { "name": "Controller comm error" },
+      "boot_locked": { "name": "Boot locked" },
+      "ocpp_connected": { "name": "OCPP connected" }
+    },
+    "switch": {
+      "charging_permitted": { "name": "Charging permitted" }
+    },
+    "number": {
+      "current_limit": { "name": "Current limit" }
+    },
+    "button": {
+      "clear_current_limit": { "name": "Clear current limit" }
+    }
+  }
+}
