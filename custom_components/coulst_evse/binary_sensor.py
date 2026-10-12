@@ -67,14 +67,9 @@ BINARY_SENSOR_DESCRIPTIONS: tuple[EvseBinarySensorDescription, ...] = (
         key="comm_error",
         translation_key="comm_error",
         device_class=BinarySensorDeviceClass.PROBLEM,
-        # The ESP32 has lost its serial link to the STM32 - everything else in the map is
-        # stale when this is on, so it's the one worth alerting on.
+        # The network comms MCU isn't able to reach the EVSE MCU
+        # so everything is stale.
         value_fn=lambda d: bool(d.status_flags & STATUS_COMM_ERROR),
-    ),
-    EvseBinarySensorDescription(
-        key="boot_locked",
-        translation_key="boot_locked",
-        value_fn=lambda d: bool(d.status_flags & STATUS_BOOT_LOCKED),
     ),
     EvseBinarySensorDescription(
         key="ocpp_connected",

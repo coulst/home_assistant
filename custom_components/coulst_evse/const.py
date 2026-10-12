@@ -108,7 +108,7 @@ LIMITING_SOURCE_NAMES = {
     3: "User setting",
     4: "Cable",
     5: "Load management",
-    6: "Temperature",
+    6: "Temperature derate",
     7: "Overcurrent derate",
     8: "Undervoltage derate",
 }
@@ -122,8 +122,6 @@ CONTROL_STATE_NAMES = {
 
 def unit_kwarg(unit_id: int) -> dict[str, int]:
     """Return the unit-id kwarg for the installed pymodbus.
-
-    pymodbus 3.10 renamed ``slave`` to ``device_id`` and later removed ``slave``.
     """
     import inspect
 

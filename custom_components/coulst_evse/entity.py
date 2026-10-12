@@ -21,5 +21,5 @@ class CoulstEvseEntity(CoordinatorEntity[CoulstEvseCoordinator]):
             identifiers={(DOMAIN, entry_id)},
             name=coordinator.name,
             manufacturer="Coul Street",
-            model="ESP32 EVSE",
+            model="Coul Street EVSE",
         )
