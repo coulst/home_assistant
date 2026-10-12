@@ -63,7 +63,5 @@ class EvseCurrentLimitNumber(CoulstEvseEntity, NumberEntity):
         return limit if limit >= MIN_LIMIT_AMPS else MIN_LIMIT_AMPS
 
     async def async_set_native_value(self, value: float) -> None:
-        await self.coordinator.client.write_register(
-            address=HOLDING_LIMIT_AMPS, value=int(value), slave=self.coordinator.unit_id
-        )
+        await self.coordinator.async_write_register(HOLDING_LIMIT_AMPS, int(value))
         await self.coordinator.async_request_refresh()

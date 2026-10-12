@@ -118,3 +118,16 @@ CONTROL_STATE_NAMES = {
     1: "Active",
     2: "Failsafe",
 }
+
+
+def unit_kwarg(unit_id: int) -> dict[str, int]:
+    """Return the unit-id kwarg for the installed pymodbus.
+
+    pymodbus 3.10 renamed ``slave`` to ``device_id`` and later removed ``slave``.
+    """
+    import inspect
+
+    from pymodbus.client import AsyncModbusTcpClient
+
+    params = inspect.signature(AsyncModbusTcpClient.read_input_registers).parameters
+    return {"device_id" if "device_id" in params else "slave": unit_id}

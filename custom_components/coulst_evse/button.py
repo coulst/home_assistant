@@ -35,7 +35,5 @@ class EvseClearCurrentLimitButton(CoulstEvseEntity, ButtonEntity):
         super().__init__(coordinator, entry_id, CLEAR_LIMIT_DESCRIPTION.key)
 
     async def async_press(self) -> None:
-        await self.coordinator.client.write_register(
-            address=HOLDING_LIMIT_AMPS, value=0, slave=self.coordinator.unit_id
-        )
+        await self.coordinator.async_write_register(HOLDING_LIMIT_AMPS, 0)
         await self.coordinator.async_request_refresh()

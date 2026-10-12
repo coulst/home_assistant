@@ -43,7 +43,5 @@ class EvseChargingPermittedSwitch(CoulstEvseEntity, SwitchEntity):
         await self._async_write(0)
 
     async def _async_write(self, value: int) -> None:
-        await self.coordinator.client.write_register(
-            address=HOLDING_CHARGE_PERMIT, value=value, slave=self.coordinator.unit_id
-        )
+        await self.coordinator.async_write_register(HOLDING_CHARGE_PERMIT, value)
         await self.coordinator.async_request_refresh()

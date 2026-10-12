@@ -12,6 +12,7 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, Upda
 
 from .const import (
     DEFAULT_SCAN_INTERVAL,
+    unit_kwarg,
     EXPECTED_MAP_VERSION,
     HOLDING_CHARGE_PERMIT,
     HOLDING_HEARTBEAT,
@@ -107,26 +108,47 @@ class CoulstEvseCoordinator(DataUpdateCoordinator[EvseData]):
         self.unit_id: int = entry.data["unit_id"]
         self._warned_map_version = False
 
-    async def _async_update_data(self) -> EvseData:
-        result = await self.client.read_input_registers(
-            address=INPUT_MAP_VERSION, count=INPUT_BLOCK_COUNT, slave=self.unit_id
+    async def async_write_register(self, address: int, value: int) -> None:
+        """Write a single holding register, logging the request and any error response."""
+        _LOGGER.debug(
+            "Writing holding register %s = %s (unit %s)", address, value, self.unit_id
+        )
+        result = await self.client.write_register(
+            address=address, value=value, **unit_kwarg(self.unit_id)
         )
         if result.isError():
+            _LOGGER.debug("Write to holding register %s failed: %s", address, result)
+        else:
+            _LOGGER.debug("Write to holding register %s acknowledged", address)
+
+    async def _async_update_data(self) -> EvseData:
+        _LOGGER.debug(
+            "Polling %s input registers from %s (unit %s)",
+            INPUT_BLOCK_COUNT,
+            self.name,
+            self.unit_id,
+        )
+        result = await self.client.read_input_registers(
+            address=INPUT_MAP_VERSION, count=INPUT_BLOCK_COUNT, **unit_kwarg(self.unit_id)
+        )
+        if result.isError():
+            _LOGGER.debug("Input register read failed: %s", result)
             raise UpdateFailed(f"Error reading EVSE input registers: {result}")
+        _LOGGER.debug("Input registers: %s", result.registers)
 
         holding_result = await self.client.read_holding_registers(
-            address=HOLDING_LIMIT_AMPS, count=2, slave=self.unit_id
+            address=HOLDING_LIMIT_AMPS, count=2, **unit_kwarg(self.unit_id)
         )
         if holding_result.isError():
+            _LOGGER.debug("Holding register read failed: %s", holding_result)
             raise UpdateFailed(f"Error reading EVSE holding registers: {holding_result}")
+        _LOGGER.debug("Holding registers: %s", holding_result.registers)
 
         # Every poll refreshes the charger's failsafe heartbeat, so a non-zero failsafe
         # timeout configured in its web UI never trips just because nothing else is
         # writing to it. Non-fatal if it fails - telemetry is still good.
         try:
-            await self.client.write_register(
-                address=HOLDING_HEARTBEAT, value=1, slave=self.unit_id
-            )
+            await self.async_write_register(HOLDING_HEARTBEAT, 1)
         except Exception:  # noqa: BLE001
             _LOGGER.debug("Failed to refresh EVSE Modbus heartbeat", exc_info=True)
 

@@ -7,6 +7,7 @@ WifiManager::advertiseModbusService()) whenever Modbus TCP is enabled on the cha
 
 from __future__ import annotations
 
+import logging
 from typing import Any
 
 import voluptuous as vol
@@ -16,6 +17,8 @@ from homeassistant.data_entry_flow import FlowResult
 from homeassistant.helpers.service_info.zeroconf import ZeroconfServiceInfo
 
 from .const import DEFAULT_PORT, DEFAULT_UNIT_ID, DOMAIN, EXPECTED_MAP_VERSION
+
+_LOGGER = logging.getLogger(__name__)
 
 CONF_UNIT_ID = "unit_id"
 
@@ -42,6 +45,9 @@ class CoulstEvseConfigFlow(ConfigFlow, domain=DOMAIN):
     ) -> FlowResult:
         host = discovery_info.host
         port = discovery_info.port or DEFAULT_PORT
+        _LOGGER.debug(
+            "Zeroconf discovered %s (%s:%s)", discovery_info.name, host, port
+        )
 
         await self.async_set_unique_id(f"{host}:{port}:{DEFAULT_UNIT_ID}")
         self._abort_if_unique_id_configured(updates={CONF_HOST: host, CONF_PORT: port})
@@ -111,23 +117,32 @@ class CoulstEvseConfigFlow(ConfigFlow, domain=DOMAIN):
     ) -> tuple[dict[str, Any], dict[str, str]]:
         from pymodbus.client import AsyncModbusTcpClient
 
-        from .const import INPUT_MAP_VERSION
+        from .const import INPUT_MAP_VERSION, unit_kwarg
 
         client = AsyncModbusTcpClient(user_input[CONF_HOST], port=user_input[CONF_PORT])
         errors: dict[str, str] = {}
+        _LOGGER.debug(
+            "Testing connection to %s:%s (unit %s)",
+            user_input[CONF_HOST],
+            user_input[CONF_PORT],
+            user_input[CONF_UNIT_ID],
+        )
         try:
             if not await client.connect():
+                _LOGGER.debug("TCP connect to %s failed", user_input[CONF_HOST])
                 errors["base"] = "cannot_connect"
                 return {}, errors
 
             result = await client.read_input_registers(
-                address=INPUT_MAP_VERSION, count=1, slave=user_input[CONF_UNIT_ID]
+                address=INPUT_MAP_VERSION, count=1, **unit_kwarg(user_input[CONF_UNIT_ID])
             )
+            _LOGGER.debug("Map version read result: %s", result)
             if result.isError():
                 errors["base"] = "cannot_connect"
             elif result.registers[0] != EXPECTED_MAP_VERSION:
                 errors["base"] = "unsupported_map_version"
         except Exception:  # noqa: BLE001 - surfaced to the user as cannot_connect
+            _LOGGER.exception("Failed to connect to %s", user_input[CONF_HOST])
             errors["base"] = "cannot_connect"
         finally:
             client.close()
