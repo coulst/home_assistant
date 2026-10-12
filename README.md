@@ -1,9 +1,10 @@
 # Coul Street EVSE - Home Assistant integration
 
 A custom integration for the EVSE's Modbus TCP server, as an easier alternative to hand-
-writing the `modbus:` YAML in [examples/home_assistant.yaml](../home_assistant.yaml). Instead
-of copy-pasting register addresses, you add the charger from Settings > Devices & Services >
-Add Integration, enter its IP, and it creates one Device with all the sensors, switches, the
+writing the `modbus:` YAML in [examples/home_assistant.yaml](../home_assistant.yaml). Chargers
+with Modbus TCP enabled show up under Settings > Devices & Services > Discovered -
+no copy-pasting register addresses or manually entering an IP. Confirming the discovery (or
+adding one manually, if you'd rather) creates one Device with all the sensors, switches, the
 current-limit number, and a clear-limit button already wired up.
 
 Register addresses, scaling, and enum mappings mirror
@@ -13,12 +14,19 @@ setup and logs a warning if it doesn't match).
 
 ## Installing
 
-1. Enable Modbus TCP on the charger under Settings in its web UI (it ships disabled).
+1. Enable Modbus TCP on the charger under Settings in its web UI (it ships disabled). This
+   is also what makes the firmware advertise the `_modbus._tcp` mDNS service that HA
+   discovers it by (`WifiManager::advertiseModbusService()` in
+   `components/network/src/wifi_manager.cpp`, called from `ModbusTcpServer::startSlave()` /
+   `stopSlave()` in `components/evse/src/modbus_tcp.cpp`) - it disappears again if you turn
+   Modbus TCP back off.
 2. Copy `custom_components/coulst_evse` into your Home Assistant `config/custom_components/`
    directory (or symlink it, if you're developing against this repo).
 3. Restart Home Assistant.
-4. Settings > Devices & Services > Add Integration > "Coul Street EVSE", then enter the
-   charger's host/IP and Modbus unit ID (1, unless you changed it).
+4. Within a minute or so, the charger should appear under Settings > Devices & Services >
+   Discovered - confirm it there. If it doesn't show up (e.g. HA and the charger are on
+   different VLANs/subnets that don't pass mDNS), add it manually instead: Add Integration >
+   "Coul Street EVSE", host/IP + Modbus unit ID (1, unless you changed it).
 
 ## What you get
 
@@ -38,12 +46,10 @@ setup and logs a warning if it doesn't match).
 
 This is a starting point, not a finished integration:
 
-- No zeroconf auto-discovery, and it can't be added without a firmware change: the charger
-  only calls `mdns_hostname_set()` (`CoulSt_<last 3 MAC bytes>` -> `coulst_xxxxxx.local`), not
-  `mdns_service_add()`, so there's no `_http._tcp.local.` or custom service type to browse and
-  no TXT records - HA's zeroconf integration discovers via service browsing, which this
-  device doesn't support. A plain hostname (`coulst_xxxxxx.local`) still works fine as the
-  manual host entry in the config flow above.
+- Zeroconf discovery matches on `_modbus._tcp.local.` with an instance name prefix of
+  `coulst_*` (`manifest.json`'s `zeroconf` key), since that service type alone isn't unique
+  to this device. The discovered entry assumes unit ID 1; if you changed it, use the manual
+  flow instead.
 - No options flow for changing the scan interval or unit ID after setup.
 - Multiple chargers already work out of the box (one config entry per charger, one Device
   each) - this is the main advantage over the YAML example, which needs manual suffixing for

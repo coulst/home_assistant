@@ -1,7 +1,8 @@
 """Config flow for the Coul Street EVSE integration.
 
-Just a host/port/unit-id form for now - see examples/ha_integration/README.md for the
-mDNS auto-discovery that's planned but not wired up yet.
+A manual host/port/unit-id form, plus zeroconf discovery off the "_modbus._tcp" service
+the firmware advertises (components/network/src/wifi_manager.cpp,
+WifiManager::advertiseModbusService()) whenever Modbus TCP is enabled on the charger.
 """
 
 from __future__ import annotations
@@ -12,6 +13,7 @@ import voluptuous as vol
 from homeassistant.config_entries import ConfigFlow
 from homeassistant.const import CONF_HOST, CONF_PORT
 from homeassistant.data_entry_flow import FlowResult
+from homeassistant.helpers.service_info.zeroconf import ZeroconfServiceInfo
 
 from .const import DEFAULT_PORT, DEFAULT_UNIT_ID, DOMAIN, EXPECTED_MAP_VERSION
 
@@ -30,6 +32,54 @@ class CoulstEvseConfigFlow(ConfigFlow, domain=DOMAIN):
     """Handle a config flow for a single Coul Street EVSE charger."""
 
     VERSION = 1
+
+    def __init__(self) -> None:
+        self._discovered_host: str | None = None
+        self._discovered_port: int = DEFAULT_PORT
+
+    async def async_step_zeroconf(
+        self, discovery_info: ZeroconfServiceInfo
+    ) -> FlowResult:
+        host = discovery_info.host
+        port = discovery_info.port or DEFAULT_PORT
+
+        await self.async_set_unique_id(f"{host}:{port}:{DEFAULT_UNIT_ID}")
+        self._abort_if_unique_id_configured(updates={CONF_HOST: host, CONF_PORT: port})
+
+        self._discovered_host = host
+        self._discovered_port = port
+        self.context["title_placeholders"] = {"host": host}
+        return await self.async_step_zeroconf_confirm()
+
+    async def async_step_zeroconf_confirm(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
+        assert self._discovered_host is not None
+
+        if user_input is not None:
+            _, errors = await self._async_try_connect(
+                {
+                    CONF_HOST: self._discovered_host,
+                    CONF_PORT: self._discovered_port,
+                    CONF_UNIT_ID: DEFAULT_UNIT_ID,
+                }
+            )
+            if errors:
+                return self.async_abort(reason="cannot_connect")
+
+            return self.async_create_entry(
+                title=f"Coul Street EVSE ({self._discovered_host})",
+                data={
+                    CONF_HOST: self._discovered_host,
+                    CONF_PORT: self._discovered_port,
+                    "unit_id": DEFAULT_UNIT_ID,
+                },
+            )
+
+        return self.async_show_form(
+            step_id="zeroconf_confirm",
+            description_placeholders={"host": self._discovered_host},
+        )
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None

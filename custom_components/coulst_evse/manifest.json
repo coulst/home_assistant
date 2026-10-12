@@ -7,5 +7,11 @@
   "iot_class": "local_polling",
   "issue_tracker": "https://github.com/coulst/esp32_connect/issues",
   "requirements": ["pymodbus>=3.6.0"],
-  "version": "0.1.0"
+  "version": "0.1.0",
+  "zeroconf": [
+    {
+      "type": "_modbus._tcp.local.",
+      "name": "coulst_*"
+    }
+  ]
 }

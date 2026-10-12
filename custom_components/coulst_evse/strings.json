@@ -8,6 +8,10 @@
           "port": "Port",
           "unit_id": "Modbus unit ID"
         }
+      },
+      "zeroconf_confirm": {
+        "title": "Coul Street EVSE discovered",
+        "description": "A charger was found at {host} advertising Modbus TCP. Add it?"
       }
     },
     "error": {
@@ -15,7 +19,8 @@
       "unsupported_map_version": "The charger reports a Modbus map version this integration doesn't understand - check for an integration update."
     },
     "abort": {
-      "already_configured": "This charger is already configured."
+      "already_configured": "This charger is already configured.",
+      "cannot_connect": "Could not connect to the discovered charger."
     }
   },
   "entity": {
