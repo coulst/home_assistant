@@ -9,12 +9,7 @@ current-limit number, and a clear-limit button wired up.
 
 ## Installing
 
-1. Enable Modbus TCP on the charger under Settings in its web UI (it ships disabled). This
-   is also what makes the firmware advertise the `_modbus._tcp` mDNS service that HA
-   discovers it by (`WifiManager::advertiseModbusService()` in
-   `components/network/src/wifi_manager.cpp`, called from `ModbusTcpServer::startSlave()` /
-   `stopSlave()` in `components/evse/src/modbus_tcp.cpp`) - it disappears again if you turn
-   Modbus TCP back off.
+1. Enable Modbus TCP on the charger under Settings 
 2. Copy `custom_components/coulst_evse` into your Home Assistant `config/custom_components/`
    directory.
 3. Restart Home Assistant.
